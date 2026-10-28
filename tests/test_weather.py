@@ -16,6 +16,9 @@ from weather import (
 
 def test_parse_time_regular_time():
     assert parse_time("14:21") == 861
+    assert parse_time("00:00") == 0
+    assert parse_time ("012:00") == 720
+    assert parse_time ("01:1") == 61
 
 def test_parse_time_Errors():
     # len(parts) != 2
@@ -42,6 +45,7 @@ def test_parse_time_Errors():
 
 def test_parse_measurement_regular_line():
     assert parse_measurement("Köln;14:21;21.7") == ("Köln", 861, 21.7)
+    assert parse_measurement("Köln;14:21;-21.7") == ("Köln", 861, -21.7)
 
 def test_parse_measurement_Errors():
      # not isinstance(line, str)
@@ -74,6 +78,8 @@ def test_filter_by_temperature_regular_values():
         ("Düsseldorf", 720, 18.5)
     ]
 
+    assert len(filter_by_temperature(measurements, 0.0, 100.0)) == len(measurements)
+
 def test_filter_by_temperature_Errors():
      # lower > upper
     with pytest.raises(ValueError, match="lower must not be greater than upper."):
@@ -88,12 +94,17 @@ def test_average_temperature_regular_values():
     ]
 
     assert average_temperature(measurements, "Köln") == 15.0
+    assert average_temperature(measurements, "Köln") != average_temperature(measurements, "köln")
 
-# def test_average_temperature_Errors():
-#      # len(temperatures) == 0
-#     with pytest.raises(ValueError, match="No measurements found for city."):
-#         filter_by_temperature(, 7, 0)
-#         filter_by_temperature(5, 0, 0)
+def test_average_temperature_Errors():
+     # len(temperatures) == 0
+    with pytest.raises(ValueError, match="No measurements found for city."):
+        filter_by_temperature([
+        ("Köln", 600, 10.0),
+        ("Düsseldorf", 720, 25.0),
+        ("Bonn", 900, 20.0),
+    ], "Grüße")
+
 
 def test_hottest_measurement_with_unique_maximum():
     measurements = [
@@ -103,3 +114,8 @@ def test_hottest_measurement_with_unique_maximum():
     ]
 
     assert hottest_measurement(measurements) == ("Düsseldorf", 720, 25.0)
+
+def test_hottest_measurement_Errors():
+     # len(measurements) == 0
+    with pytest.raises(ValueError, match="No measurements available."):
+        filter_by_temperature([])
